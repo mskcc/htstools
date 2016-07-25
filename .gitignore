@@ -1,0 +1,8 @@
+a.out
+*.csv
+*.vcf
+*.txt
+*.vcf.gz
+
+*~
+#*#
