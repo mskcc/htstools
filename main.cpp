@@ -12,6 +12,7 @@ static struct argp_option options[] = {
 	{"min-read-counts", 'r', "READS", 0, "Comma separated list of minimum read counts for a position to be output. Default is 0."},
 	{"max-depth", 'd',"DEPTH", 0, "Sets the maximum depth. Default is 4000."},
 	{"progress", 'p', 0, 0, "Show a progress bar. WARNING: requires additional time to calculate number of SNPs, and will take longer than normal."},
+	{"pseudo-snps", 'P', "MULTIPLE", 0, "Every MULTIPLE positions, if there is no SNP, insert a blank record with the total count at the position."},
 	{"verbose", 'v', 0, 0, "Show detailed messages."},
 	{ 0 }
 };
@@ -26,6 +27,10 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 		
 	case 'd':
 		arguments->max_depth = atoi(arg);
+		break;
+
+	case 'P':
+		arguments->pseudo_snps = atoi(arg);
 		break;
 
 	case 'p':
@@ -279,6 +284,7 @@ int program_main(arguments arguments) {
 	bool first = true;
 	uint64_t current_count = 0;
 	float last_progress = 100.0;
+	bool have_snpped = false;
 	while ( bcf_sr_next_line(vcfReader) ) { 
 		bcf1_t *line = vcfReader->readers[0].buffer[0];
 		vcf_tid = vcf_chr_to_bam((char*) vcfHdr->id[BCF_DT_CTG][line->rid].key, hdr->target_name, hdr->n_targets);
@@ -314,6 +320,7 @@ int program_main(arguments arguments) {
 				first = false;
 			}
 			//printf("position %d, chr %s, n_plp %d, file %d\n", pos + 1, hdr->target_name[tid], n_plp[i], i);
+			have_snpped = false;
 			if (vcf_tid > tid) {
 				// snp's tid comes after where I am at
 				// skip ahead
@@ -367,12 +374,51 @@ int program_main(arguments arguments) {
 					fprintf(output_file, "\n");
 				}
 				f_info.clear();
+				have_snpped = true;
 			}
 			if (tid > vcf_tid || (tid == vcf_tid && pos > line->pos)) {
 				// we missed it, go to the next one
 				//printf("i'm at %d, vcf is at %d\n", tid, vcf_tid);
 				break;
-			}			
+			}
+			if (arguments.pseudo_snps && !have_snpped && (((pos + 1) % arguments.pseudo_snps) == 0)) {
+				bool is_zero = false;
+				for (i = 0; i < n; i++) {
+				    file_info this_file = file_info();
+					this_file.refs = 0;
+					this_file.alts = 0;
+					this_file.errors = 0;
+					this_file.deletions = 0;
+					if (n_plp[i] >= arguments.min_read_counts[i]) {
+						for (int j = 0; j < n_plp[i]; ++j) { 
+							const bam_pileup1_t *p = plp[i] + j; 
+							int c = p->qpos < p->b->core.l_qseq 
+								? bam_get_qual(p->b)[p->qpos] 
+								: 0;
+							if (c == 0) {
+								continue; // no
+							}
+							if (c < arguments.min_base_quality) {
+								continue; // skip anything with quality below threshold
+							}
+							this_file.refs++;
+						}			
+					}
+					if (this_file.refs == 0) {
+						is_zero = true;
+					}
+					f_info.push_back(this_file);
+				}
+				// add a pseudo snp!
+				if (!is_zero) {
+					fprintf(output_file, "%s,%d,.,.",  hdr->target_name[tid], pos + 1);
+					for (i = 0; i < n; i++) {
+						fprintf(output_file, ",%d,0,0,0", f_info[i].refs);
+					}
+					fprintf(output_file, "\n");
+				}
+				f_info.clear();
+			}
 		}
 	}
 	
@@ -390,6 +436,7 @@ int main(int argc, char ** argv) {
 	arguments.min_read_counts = vector<int>();
 	arguments.max_depth = 4000;
 	arguments.progress = false;
+	arguments.pseudo_snps = 0;
 	arguments.verbose = false;
 	
 	argp_parse (&argp, argc, argv, 0, 0, &arguments);

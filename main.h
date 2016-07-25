@@ -41,6 +41,7 @@ struct arguments {
 	vector<int> min_read_counts;
 	int max_depth;
 	bool progress;
+	int pseudo_snps;
 	bool verbose;
 };
 

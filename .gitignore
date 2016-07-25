@@ -1,8 +1,11 @@
-a.out
+snp-pileup
+
 *.csv
 *.vcf
 *.txt
 *.vcf.gz
+*.csi
+*.tbi
 
 *~
 #*#
