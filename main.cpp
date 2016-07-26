@@ -24,7 +24,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 	case 'A':
 		arguments->count_orphans = true;
 		break;
-		
+
 	case 'd':
 		arguments->max_depth = atoi(arg);
 		break;
@@ -36,8 +36,8 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 	case 'p':
 		arguments->progress = true;
 		break;
-		
-    case 'r':
+
+	case 'r':
 		char * token;
 		token = strtok(arg, ",");
 		while (token) {
@@ -46,27 +46,26 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 		}
 		break;
 
-    case 'Q':
+	case 'Q':
 		arguments->min_base_quality = atoi(arg);
 		break;
 
-    case 'q':
+	case 'q':
 		arguments->min_map_quality = atoi(arg);
 		break;
-		
+
 	case 'x':
 		arguments->ignore_overlaps = true;
 		break;
-		
+
 	case 'v':
 		arguments->verbose = true;
 		break;
 
-	case ARGP_KEY_ARG:		
+	case ARGP_KEY_ARG:
 		arguments->args.push_back(arg);
-		
 		break;
-		
+
 	case ARGP_KEY_END:
 		if (state->arg_num < 4) {
 			// Not enough arguments.
@@ -76,7 +75,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 			arguments->min_read_counts.push_back(0);
 		}
 		break;
-		
+
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
@@ -88,37 +87,37 @@ static struct argp argp = { options, parse_opt, args_doc, 0 };
 static int mplp_func(void *data, bam1_t *b) {
 	// it seems to me that this function is run once every read, and lets you control if the read should be skipped or not
 	// here is where you would put quality checks and things like that
-	
+
 //	printf("hello\n");
-    char *ref; 
-    mplp_aux_t *ma = (mplp_aux_t*)data; 
-    int ret, skip = 0, ref_len; 
-    do { 
-        int has_ref; 
-        ret = sam_read1(ma->fp, ma->h, b); 
-        if (ret < 0) break;
+	char *ref;
+	mplp_aux_t *ma = (mplp_aux_t*)data;
+	int ret, skip = 0, ref_len;
+	do {
+		int has_ref;
+		ret = sam_read1(ma->fp, ma->h, b);
+		if (ret < 0) break;
 
 		if (b->core.flag & READ_FAILED_QUALITY_CHECKS || b->core.flag & READ_SECONDARY_ALIGNMENT || b->core.flag & READ_PCR_OPTICAL_DUPLICATE || b->core.flag & READ_UNMAPPED) {
 			skip = 1;
 			continue;
 		}
-		
-		if (b->core.tid < 0 || (b->core.flag&BAM_FUNMAP)) { // exclude unmapped reads 
-            skip = 1; 
-            continue; 
+
+		if (b->core.tid < 0 || (b->core.flag&BAM_FUNMAP)) { // exclude unmapped reads
+			skip = 1;
+			continue;
 		}
-		
-		/*if (ma->conf->bed && ma->conf->all == 0) { // test overlap 
-            skip = !bed_overlap(ma->conf->bed, ma->h->target_name[b->core.tid], b->core.pos, bam_endpos(b)); 
-            if (skip) continue; 
+
+		/*if (ma->conf->bed && ma->conf->all == 0) { // test overlap
+			skip = !bed_overlap(ma->conf->bed, ma->h->target_name[b->core.tid], b->core.pos, bam_endpos(b));
+			if (skip) continue;
 		}*/
 
-		skip = 0; 
-        /*if (has_ref && (ma->conf->flag&MPLP_REALN)) sam_prob_realn(b, ref, ref_len, (ma->conf->flag & MPLP_REDO_BAQ)? 7 : 3); 
-        if (has_ref && ma->conf->capQ_thres > 10) { 
-            int q = sam_cap_mapq(b, ref, ref_len, ma->conf->capQ_thres); 
-            if (q < 0) skip = 1; 
-            else if (b->core.qual > q) b->core.qual = q; 
+		skip = 0;
+		/*if (has_ref && (ma->conf->flag&MPLP_REALN)) sam_prob_realn(b, ref, ref_len, (ma->conf->flag & MPLP_REDO_BAQ)? 7 : 3);
+		if (has_ref && ma->conf->capQ_thres > 10) {
+			int q = sam_cap_mapq(b, ref, ref_len, ma->conf->capQ_thres);
+			if (q < 0) skip = 1;
+			else if (b->core.qual > q) b->core.qual = q;
 			} */
 		if (b->core.qual < ma->conf->min_map_quality) {
 			skip = 1;
@@ -127,9 +126,9 @@ static int mplp_func(void *data, bam1_t *b) {
 		} else if (!ma->conf->count_orphans && (b->core.flag&BAM_FPAIRED) && !(b->core.flag&BAM_FPROPER_PAIR)) {
 			skip = 1;
 		}
-	} while (skip); 
-    return ret; 
-} 
+	} while (skip);
+	return ret;
+}
 
 static int vcf_chr_to_bam(char * chromosome, char ** bam_chrs, int32_t n_targets) {
 	// try to remove chr prefix if it exists
@@ -159,8 +158,8 @@ uint64_t get_snp_count(char * file) {
 		printf("Failed to read VCF file: %s\n", bcf_sr_strerror(vcfReader->errnum));
 		return 1;
 	}
-	while ( bcf_sr_next_line(vcfReader)) 
-    {
+	while ( bcf_sr_next_line(vcfReader))
+	{
 		count++;
 	}
 
@@ -170,15 +169,15 @@ uint64_t get_snp_count(char * file) {
 
 int program_main(arguments arguments) {
 	clock_t start = clock();
-	
+
 	int i = 0;
 	int n = arguments.args.size() - 2; // n is the number of files. currently hardcoded at 2
 	bam_mplp_t iter;
-	const bam_pileup1_t ** plp = (const bam_pileup1_t **) calloc(n, sizeof(bam_pileup1_t*)); 
-    int * n_plp = (int*) calloc(n, sizeof(int));
+	const bam_pileup1_t ** plp = (const bam_pileup1_t **) calloc(n, sizeof(bam_pileup1_t*));
+	int * n_plp = (int*) calloc(n, sizeof(int));
 	char *ref;
-	int ref_len;	 
-    mplp_ref_t mp_ref = MPLP_REF_INIT;
+	int ref_len;
+	mplp_ref_t mp_ref = MPLP_REF_INIT;
 	struct arguments * conf = &arguments;
 	hts_verbose = 1;
 
@@ -198,7 +197,7 @@ int program_main(arguments arguments) {
 		printf("done.\n");
 		cout.flush();
 	}
-	
+
 	// construct data to pass to pileup engine
 	mplp_aux_t **data;
 	data = (mplp_aux_t **) calloc(n, sizeof(mplp_aux_t*)); // allocate memory for data
@@ -208,7 +207,7 @@ int program_main(arguments arguments) {
 		// open file
 		hFILE *hfp = hopen(arguments.args[i + 2], "r");
 		htsFormat fmt;
-	
+
 		if (!hfp) {
 			printf("Failed to read sequence file %s (%s).\n", arguments.args[i + 2], strerror(errno));
 			return 1;
@@ -233,11 +232,11 @@ int program_main(arguments arguments) {
 		data[i]->h = sam_hdr_read(data[i]->fp);
 		data[i]->ref = &mp_ref;
 	}
-	
+
 	// read first header
 	bam_hdr_t * hdr;
 	hdr = data[0]->h;
-	
+
 	// start pileup engine
 	iter = bam_mplp_init(n, mplp_func, (void**)data);
 	if (!arguments.ignore_overlaps) {
@@ -258,7 +257,7 @@ int program_main(arguments arguments) {
 		return 1;
 	}
 	// DON'T CLOSE test_output HERE because if you are here, test_output is null
-	
+
 	// open output file
 	FILE * output_file = fopen(arguments.args[1], "w+");
 	if (!output_file) {
@@ -272,7 +271,7 @@ int program_main(arguments arguments) {
 		fprintf(output_file, ",File %d Refs,File %d Alts,File %d Errors,File %d Deletions", (i + 1), (i + 1), (i + 1), (i + 1));
 	}
 	fprintf(output_file, "\n");
-	
+
 	// go through it
 	int ret;
 	int tid, pos, vcf_tid;
@@ -281,7 +280,7 @@ int program_main(arguments arguments) {
 	uint64_t current_count = 0;
 	float last_progress = 100.0;
 	bool have_snpped = false;
-	while ( bcf_sr_next_line(vcfReader) ) { 
+	while ( bcf_sr_next_line(vcfReader) ) {
 		bcf1_t *line = vcfReader->readers[0].buffer[0];
 		vcf_tid = vcf_chr_to_bam((char*) vcfHdr->id[BCF_DT_CTG][line->rid].key, hdr->target_name, hdr->n_targets);
 		current_count++;
@@ -290,7 +289,7 @@ int program_main(arguments arguments) {
 		float progress = ((float)current_count/count);
 		if (arguments.progress && (int)(last_progress*100) != (int)(progress*100)) {
 			int barWidth = 70;
-			
+
 			cout << "[";
 			int pos = barWidth * progress;
 			for (int i = 0; i < barWidth; ++i) {
@@ -310,7 +309,7 @@ int program_main(arguments arguments) {
 		if (!first && tid > vcf_tid) {
 			// keep going...
 			continue;
-		}	
+		}
 		while ( (ret=bam_mplp_auto(iter, &tid, &pos, n_plp, plp)) > 0) {
 			if (first) {
 				first = false;
@@ -328,16 +327,16 @@ int program_main(arguments arguments) {
 				bool is_zero = false;
 				for (i = 0; i < n; ++i) {
 					// this is once for each file
-				    file_info this_file = file_info();
+					file_info this_file = file_info();
 					this_file.refs = 0;
 					this_file.alts = 0;
 					this_file.errors = 0;
 					this_file.deletions = 0;
 					if (n_plp[i] >= arguments.min_read_counts[i]) {
-						for (int j = 0; j < n_plp[i]; ++j) { 
-							const bam_pileup1_t *p = plp[i] + j; 
-							int c = p->qpos < p->b->core.l_qseq 
-								? bam_get_qual(p->b)[p->qpos] 
+						for (int j = 0; j < n_plp[i]; ++j) {
+							const bam_pileup1_t *p = plp[i] + j;
+							int c = p->qpos < p->b->core.l_qseq
+								? bam_get_qual(p->b)[p->qpos]
 								: 0;
 							if (c == 0) {
 								continue; // no
@@ -355,7 +354,7 @@ int program_main(arguments arguments) {
 							} else {
 								this_file.errors++;
 							}
-						}						
+						}
 					}
 					if (this_file.refs == 0 && this_file.alts == 0 && this_file.errors == 0) {
 						is_zero = true;
@@ -380,16 +379,16 @@ int program_main(arguments arguments) {
 			if (arguments.pseudo_snps && !have_snpped && (((pos + 1) % arguments.pseudo_snps) == 0)) {
 				bool is_zero = false;
 				for (i = 0; i < n; i++) {
-				    file_info this_file = file_info();
+					file_info this_file = file_info();
 					this_file.refs = 0;
 					this_file.alts = 0;
 					this_file.errors = 0;
 					this_file.deletions = 0;
 					if (n_plp[i] >= arguments.min_read_counts[i]) {
-						for (int j = 0; j < n_plp[i]; ++j) { 
-							const bam_pileup1_t *p = plp[i] + j; 
-							int c = p->qpos < p->b->core.l_qseq 
-								? bam_get_qual(p->b)[p->qpos] 
+						for (int j = 0; j < n_plp[i]; ++j) {
+							const bam_pileup1_t *p = plp[i] + j;
+							int c = p->qpos < p->b->core.l_qseq
+								? bam_get_qual(p->b)[p->qpos]
 								: 0;
 							if (c == 0) {
 								continue; // no
@@ -398,7 +397,7 @@ int program_main(arguments arguments) {
 								continue; // skip anything with quality below threshold
 							}
 							this_file.refs++;
-						}			
+						}
 					}
 					if (this_file.refs == 0) {
 						is_zero = true;
@@ -417,12 +416,12 @@ int program_main(arguments arguments) {
 			}
 		}
 	}
-	
+
 	double duration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
 	printf("Finished in %f seconds.\n", duration);
 }
 
-int main(int argc, char ** argv) {	
+int main(int argc, char ** argv) {
 	struct arguments arguments;
 
 	arguments.args = vector<char *>();
@@ -435,7 +434,7 @@ int main(int argc, char ** argv) {
 	arguments.progress = false;
 	arguments.pseudo_snps = 0;
 	arguments.verbose = false;
-	
+
 	argp_parse (&argp, argc, argv, 0, 0, &arguments);
 
 	return program_main(arguments);
