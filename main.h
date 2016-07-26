@@ -33,7 +33,7 @@
 using namespace std;
 
 struct arguments {
-	char *args[4];
+	vector<char*> args;
 	bool count_orphans;
 	bool ignore_overlaps;
 	int min_base_quality;

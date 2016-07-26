@@ -2,7 +2,7 @@
 
 #include <argp.h>
 
-static char args_doc[] = "<vcf file> <output file> <sequence file 1> <sequence file 2>";
+static char args_doc[] = "<vcf file> <output file> <sequence files...>";
 
 static struct argp_option options[] = {
 	{"count-orphans", 'A', 0, 0, "Do not discard anomalous read pairs."},
@@ -62,13 +62,8 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 		arguments->verbose = true;
 		break;
 
-	case ARGP_KEY_ARG:
-		if (state->arg_num >= 4) {
-			// Too many arguments.
-			argp_usage (state);
-		}
-		
-		arguments->args[state->arg_num] = arg;
+	case ARGP_KEY_ARG:		
+		arguments->args.push_back(arg);
 		
 		break;
 		
@@ -177,7 +172,7 @@ int program_main(arguments arguments) {
 	clock_t start = clock();
 	
 	int i = 0;
-	int n = 2; // n is the number of files. currently hardcoded at 2
+	int n = arguments.args.size() - 2; // n is the number of files. currently hardcoded at 2
 	bam_mplp_t iter;
 	const bam_pileup1_t ** plp = (const bam_pileup1_t **) calloc(n, sizeof(bam_pileup1_t*)); 
     int * n_plp = (int*) calloc(n, sizeof(int));
@@ -185,22 +180,7 @@ int program_main(arguments arguments) {
 	int ref_len;	 
     mplp_ref_t mp_ref = MPLP_REF_INIT;
 	struct arguments * conf = &arguments;
-
-	// check if output exists
-	FILE * test_output = fopen(arguments.args[1], "r");
-	if (test_output) {
-		printf("Output file %s already exists!\n", arguments.args[1]);
-		fclose(test_output);
-		return 1;
-	}
-	// DON'T CLOSE test_output HERE because if you are here, test_output is null
-	
-	// open output file
-	FILE * output_file = fopen(arguments.args[1], "w+");
-	if (!output_file) {
-		printf("Failed to open output file for writing: %s\n", strerror(errno));
-		return 1;
-	}
+	hts_verbose = 1;
 
 	// load vcf file
 	bcf_srs_t * vcfReader = bcf_sr_init();
@@ -268,6 +248,22 @@ int program_main(arguments arguments) {
 
 	if (arguments.verbose) {
 		printf("Max per-file depth set to %d.\n", max_depth);
+	}
+
+	// check if output exists
+	FILE * test_output = fopen(arguments.args[1], "r");
+	if (test_output) {
+		printf("Output file %s already exists!\n", arguments.args[1]);
+		fclose(test_output);
+		return 1;
+	}
+	// DON'T CLOSE test_output HERE because if you are here, test_output is null
+	
+	// open output file
+	FILE * output_file = fopen(arguments.args[1], "w+");
+	if (!output_file) {
+		printf("Failed to open output file for writing: %s\n", strerror(errno));
+		return 1;
 	}
 
 	// output header to file
@@ -429,6 +425,7 @@ int program_main(arguments arguments) {
 int main(int argc, char ** argv) {	
 	struct arguments arguments;
 
+	arguments.args = vector<char *>();
 	arguments.count_orphans = false;
 	arguments.ignore_overlaps = false;
 	arguments.min_base_quality = 0;
