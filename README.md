@@ -13,6 +13,7 @@ sudo ./install.sh
 
 # Usage
 `snp-pileup <vcf file> <output file> <sequence files...>`
+
 Usage of snp-pileup requires a VCF file and one (or multiple) sequence files containing DNA. The sequence files should be in the BAM format, and both the VCF and all sequence files must be sorted.
 
 ## Parameters
@@ -37,5 +38,6 @@ This option enables detailed messages.
 * `-x, --ignore-overlaps`
 By default, snp-pileup will try to detect where paired reads overlap and count those overlaps as a single read, instead of two different reads that are from the same fragment. This option will disable that detection.
 
+You can view this list at any time by using `--help`.
 ## Limitations
 SNPs where there are multiple nucleotides changing will be ignored, and all minimum thresholds (except for the minimum read count) apply equally to all files&mdash;there is no way to set them on a per-file basis.
