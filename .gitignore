@@ -1,11 +1,15 @@
 snp-pileup
 
 *.csv
-*.vcf
 *.txt
-*.vcf.gz
 *.csi
 *.tbi
+
+*.bam
+*.bai
+*.sam
+*.vcf
+*.vcf.gz
 
 *~
 #*#

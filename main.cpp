@@ -67,7 +67,7 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 		break;
 
 	case ARGP_KEY_END:
-		if (state->arg_num < 4) {
+		if (state->arg_num < 3) {
 			// Not enough arguments.
 			argp_usage (state);
 		}
@@ -305,9 +305,13 @@ int program_main(arguments arguments) {
 		if (line->n_allele != 2 || strlen(line->d.allele[0]) != 1 || strlen(line->d.allele[1]) != 1) {
 			continue;
 		}
-		//printf("vcf: chrom %s, pos %d, id %s, ref %s, alt %s\n", vcfHdr->id[BCF_DT_CTG][line->rid].key, line->pos, line->d.id, line->d.allele[0], line->d.allele[1]);
+		//printf("vcf: chrom %s, pos %d, id %s, ref %s, alt %s\n", vcfHdr->id[BCF_DT_CTG][line->rid].key, line->pos + 1, line->d.id, line->d.allele[0], line->d.allele[1]);
 		if (!first && tid > vcf_tid) {
 			// keep going...
+			continue;
+		}
+		if (!first && line->pos < pos) {
+			//printf("line->pos < pos, skipping\n");
 			continue;
 		}
 		while ( (ret=bam_mplp_auto(iter, &tid, &pos, n_plp, plp)) > 0) {
@@ -324,7 +328,8 @@ int program_main(arguments arguments) {
 			if (tid == vcf_tid && pos == line->pos) {
 				// we found what we're looking for!
 				// output it to the file
-				bool is_zero = false;
+				bool is_not_zero = false;
+				bool fails_min = false;
 				for (i = 0; i < n; ++i) {
 					// this is once for each file
 					file_info this_file = file_info();
@@ -355,13 +360,15 @@ int program_main(arguments arguments) {
 								this_file.errors++;
 							}
 						}
+					} else {
+						fails_min = true;
 					}
-					if (this_file.refs == 0 && this_file.alts == 0 && this_file.errors == 0) {
-						is_zero = true;
+					if (this_file.refs != 0 || this_file.alts != 0 || this_file.errors != 0) {
+						is_not_zero = true;
 					}
 					f_info.push_back(this_file);
 				}
-				if (!is_zero) {
+				if (is_not_zero && !fails_min) {
 					fprintf(output_file, "%s,%d,%c,%c", hdr->target_name[tid], line->pos + 1, line->d.allele[0][0], line->d.allele[1][0]);
 					for (i = 0; i < n; i++) {
 						fprintf(output_file, ",%d,%d,%d,%d", f_info[i].refs, f_info[i].alts, f_info[i].errors, f_info[i].deletions);
@@ -370,14 +377,11 @@ int program_main(arguments arguments) {
 				}
 				f_info.clear();
 				have_snpped = true;
-			}
-			if (tid > vcf_tid || (tid == vcf_tid && pos > line->pos)) {
-				// we missed it, go to the next one
-				//printf("i'm at %d, vcf is at %d\n", tid, vcf_tid);
 				break;
 			}
 			if (arguments.pseudo_snps && !have_snpped && (((pos + 1) % arguments.pseudo_snps) == 0)) {
-				bool is_zero = false;
+				bool is_not_zero = false;
+				bool fails_min = false;
 				for (i = 0; i < n; i++) {
 					file_info this_file = file_info();
 					this_file.refs = 0;
@@ -398,14 +402,16 @@ int program_main(arguments arguments) {
 							}
 							this_file.refs++;
 						}
+					} else {
+						fails_min = true;
 					}
-					if (this_file.refs == 0) {
-						is_zero = true;
+					if (this_file.refs != 0) {
+						is_not_zero = true;
 					}
 					f_info.push_back(this_file);
 				}
 				// add a pseudo snp!
-				if (!is_zero) {
+				if (is_not_zero && !fails_min) {
 					fprintf(output_file, "%s,%d,.,.",  hdr->target_name[tid], pos + 1);
 					for (i = 0; i < n; i++) {
 						fprintf(output_file, ",%d,0,0,0", f_info[i].refs);
@@ -413,6 +419,11 @@ int program_main(arguments arguments) {
 					fprintf(output_file, "\n");
 				}
 				f_info.clear();
+			}
+			if (tid > vcf_tid || (tid == vcf_tid && pos > line->pos)) {
+				// we missed it, go to the next one
+				//printf("i'm at %d, vcf is at %d\n", tid, vcf_tid);
+				break;
 			}
 		}
 	}
