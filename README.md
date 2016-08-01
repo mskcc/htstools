@@ -17,7 +17,7 @@ sudo ./install.sh
 Usage of snp-pileup requires a VCF file and one (or multiple) sequence files containing DNA. The sequence files should be in the BAM format, and both the VCF and all sequence files must be sorted.
 
 ## Parameters
-Here is a list of all parameters `snp-pileup` accepts and information about what they do.
+Here is a list of all parameters `snp-pileup` accepts and information about what they do. Some of them, such as `-q`, `-Q`, `-A`, and `-x`, are the same as their equivalent in `samtools mpileup`, and are used the same way.
 
 * `-A, --count-orphans`
 This option will enable counting reads that are not properly paired.
