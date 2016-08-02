@@ -3,6 +3,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #include "htslib/bgzf.h"
@@ -35,6 +36,8 @@ using namespace std;
 struct arguments {
 	vector<char*> args;
 	bool count_orphans;
+	bool gzipped;
+	BGZF* gzippedPointer;
 	bool ignore_overlaps;
 	int min_base_quality;
 	int min_map_quality;
@@ -43,6 +46,7 @@ struct arguments {
 	bool progress;
 	int pseudo_snps;
 	bool verbose;
+	void (*outFunc)(arguments, string, FILE *);
 };
 
 struct file_info {

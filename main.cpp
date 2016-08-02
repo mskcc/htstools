@@ -6,6 +6,7 @@ static char args_doc[] = "<vcf file> <output file> <sequence files...>";
 
 static struct argp_option options[] = {
 	{"count-orphans", 'A', 0, 0, "Do not discard anomalous read pairs."},
+	{"gzip", 'g', 0, 0, "Compresses the output file with BGZF."},
 	{"ignore-overlaps", 'x', 0, 0, "Disable read-pair overlap detection."},
 	{"min-base-quality", 'Q', "QUALITY", 0, "Sets the minimum threshold for base quality. Default is 0."},
 	{"min-map-quality", 'q', "QUALITY", 0, "Sets the minimum threshold for mapping quality. Default is 0."},
@@ -29,6 +30,10 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 		arguments->max_depth = atoi(arg);
 		break;
 
+    case 'g':
+		arguments->gzipped = true;
+		break;
+		
 	case 'P':
 		arguments->pseudo_snps = atoi(arg);
 		break;
@@ -167,6 +172,22 @@ uint64_t get_snp_count(char * file) {
 	return count;
 }
 
+void print_output(arguments arguments, string str, FILE * fp) {
+	fputs(str.c_str(), fp);
+}
+
+void gzip_output(arguments arguments, string str, FILE * fp) {
+    if (bgzf_write(arguments.gzippedPointer, str.c_str(), str.length()) < 0) {
+		printf("failed to write to file, terminating.\n");
+		exit(1);
+	}
+}
+
+inline bool ends_with(std::string const & value, std::string const & ending) {
+    if (ending.size() > value.size()) return false;
+    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
 int program_main(arguments arguments) {
 	clock_t start = clock();
 
@@ -249,28 +270,49 @@ int program_main(arguments arguments) {
 		printf("Max per-file depth set to %d.\n", max_depth);
 	}
 
+	string fname = string(arguments.args[1]);
+	if (arguments.gzipped) {
+		if (!ends_with(fname, ".gz")) {
+			fname += ".gz";
+		}
+		arguments.outFunc = gzip_output;
+	}
 	// check if output exists
-	FILE * test_output = fopen(arguments.args[1], "r");
+	FILE * test_output = fopen(fname.c_str(), "r");
 	if (test_output) {
 		printf("Output file %s already exists!\n", arguments.args[1]);
 		fclose(test_output);
 		return 1;
 	}
 	// DON'T CLOSE test_output HERE because if you are here, test_output is null
-
-	// open output file
-	FILE * output_file = fopen(arguments.args[1], "w+");
-	if (!output_file) {
-		printf("Failed to open output file for writing: %s\n", strerror(errno));
-		return 1;
+	FILE * output_file = NULL;
+	if (arguments.gzipped) {
+		arguments.gzippedPointer = bgzf_open(fname.c_str(), "w+");
+	} else {
+		// open output file
+		output_file = fopen(fname.c_str(), "w+");
+		if (!output_file) {
+			printf("Failed to open output file for writing: %s\n", strerror(errno));
+			return 1;
+		}
 	}
 
+	ostringstream output;
 	// output header to file
-	fprintf(output_file, "Chromosome,Position,Ref,Alt");
+	output << "Chromosome,Position,Ref,Alt";
 	for (i = 0; i < n; ++i) {
-		fprintf(output_file, ",File %d Refs,File %d Alts,File %d Errors,File %d Deletions", (i + 1), (i + 1), (i + 1), (i + 1));
+		output << ",File ";
+		output << (i + 1);
+		output << " Refs,File ";
+		output << (i + 1);
+	    output << " Alts,File ";
+		output << (i + 1);
+		output << " Errors,File ";
+		output << (i + 1);
+		output << " Deletions";
 	}
-	fprintf(output_file, "\n");
+	output << "\n";
+	(arguments.outFunc)(arguments, output.str(), output_file);
 
 	// go through it
 	int ret;
@@ -369,11 +411,27 @@ int program_main(arguments arguments) {
 					f_info.push_back(this_file);
 				}
 				if (is_not_zero && !fails_min) {
-					fprintf(output_file, "%s,%d,%c,%c", hdr->target_name[tid], line->pos + 1, line->d.allele[0][0], line->d.allele[1][0]);
+					output.str("");
+					output.clear();
+					output << hdr->target_name[tid];
+					output << ",";
+					output << (line->pos + 1);
+					output << ",";
+					output << line->d.allele[0][0];
+					output << ",";
+					output << line->d.allele[1][0];
 					for (i = 0; i < n; i++) {
-						fprintf(output_file, ",%d,%d,%d,%d", f_info[i].refs, f_info[i].alts, f_info[i].errors, f_info[i].deletions);
-					}
-					fprintf(output_file, "\n");
+						output << ",";
+						output << f_info[i].refs;
+						output << ",";
+						output << f_info[i].alts;
+						output << ",";
+						output << f_info[i].errors;
+						output << ",";
+						output << f_info[i].deletions;
+					}	
+					output << "\n";
+					(arguments.outFunc)(arguments, output.str(), output_file);
 				}
 				f_info.clear();
 				have_snpped = true;
@@ -412,11 +470,19 @@ int program_main(arguments arguments) {
 				}
 				// add a pseudo snp!
 				if (is_not_zero && !fails_min) {
-					fprintf(output_file, "%s,%d,.,.",  hdr->target_name[tid], pos + 1);
+					output.str("");
+					output.clear();
+					output << hdr->target_name[tid];
+					output << ",";
+					output << (pos + 1);
+					output << ",.,.";
 					for (i = 0; i < n; i++) {
-						fprintf(output_file, ",%d,0,0,0", f_info[i].refs);
+						output << ",";
+						output << f_info[i].refs;
+						output << ",0,0,0";
 					}
-					fprintf(output_file, "\n");
+					output << "\n";
+					(arguments.outFunc)(arguments, output.str(), output_file);
 				}
 				f_info.clear();
 			}
@@ -430,6 +496,12 @@ int program_main(arguments arguments) {
 
 	double duration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
 	printf("Finished in %f seconds.\n", duration);
+
+	if (arguments.gzipped) {
+		bgzf_close(arguments.gzippedPointer);
+	} else {
+		fclose(output_file);
+	}
 }
 
 int main(int argc, char ** argv) {
@@ -437,11 +509,13 @@ int main(int argc, char ** argv) {
 
 	arguments.args = vector<char *>();
 	arguments.count_orphans = false;
+	arguments.gzipped = false;
 	arguments.ignore_overlaps = false;
 	arguments.min_base_quality = 0;
 	arguments.min_map_quality = 0;
 	arguments.min_read_counts = vector<int>();
 	arguments.max_depth = 4000;
+	arguments.outFunc = print_output;
 	arguments.progress = false;
 	arguments.pseudo_snps = 0;
 	arguments.verbose = false;

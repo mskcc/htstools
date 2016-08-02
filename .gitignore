@@ -1,7 +1,10 @@
 snp-pileup
 
 *.csv
+*.csv.gz
 *.txt
+*.txt.gz
+
 *.csi
 *.tbi
 
