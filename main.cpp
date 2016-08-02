@@ -310,7 +310,7 @@ int program_main(arguments arguments) {
 			// keep going...
 			continue;
 		}
-		if (!first && line->pos < pos) {
+		if (!first && tid == vcf_tid && line->pos < pos) {
 			//printf("line->pos < pos, skipping\n");
 			continue;
 		}
