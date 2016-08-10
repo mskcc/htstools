@@ -1,7 +1,7 @@
-### htstools ###
+# htstools 
 Contains three tools (dnafrags, ppflag-fixer, snp-pileup) written by Alex Studer to process bam files for downstream copy number analysis. 
 
-# Installation
+## Installation
 First, HTSlib must be installed on your system. To do that, [download](http://www.htslib.org/download/) it and follow the "Building and installing" instructions on that page.
 
 Then, download this code, extract it, `cd` to where you extracted it, and run the following:
@@ -10,15 +10,15 @@ sudo ldconfig # only needs to be run the first time
 ./compile.sh
 sudo ./install.sh
 ```
-# snp-pileup
+## snp-pileup
 This application will, given a VCF file containing SNP locations, output for each SNP the counts of the reference nucleotide, alternative nucleotide, errors, and deletions.
 
-# Usage
+### Usage
 `snp-pileup <vcf file> <output file> <sequence files...>`
 
 Usage of snp-pileup requires a VCF file and one (or multiple) sequence files containing DNA. The sequence files should be in the BAM format, and both the VCF and all sequence files must be sorted.
 
-## Parameters
+### Parameters
 Here is a list of all parameters `snp-pileup` accepts and information about what they do. Some of them, such as `-q`, `-Q`, `-A`, and `-x`, are the same as their equivalent in `samtools mpileup`, and are used the same way.
 
 * `-A, --count-orphans`
@@ -41,5 +41,5 @@ This option enables detailed messages.
 By default, snp-pileup will try to detect where paired reads overlap and count those overlaps as a single read, instead of two different reads that are from the same fragment. This option will disable that detection.
 
 You can view this list at any time by using `--help`.
-## Limitations
+### Limitations
 SNPs where there are multiple nucleotides changing will be ignored, and all minimum thresholds (except for the minimum read count) apply equally to all files&mdash;there is no way to set them on a per-file basis.
