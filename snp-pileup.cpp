@@ -1,4 +1,4 @@
-#include "main.h"
+#include "snp-pileup.h"
 
 #include <argp.h>
 
@@ -30,10 +30,10 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 		arguments->max_depth = atoi(arg);
 		break;
 
-    case 'g':
+	case 'g':
 		arguments->gzipped = true;
 		break;
-		
+
 	case 'P':
 		arguments->pseudo_snps = atoi(arg);
 		break;
