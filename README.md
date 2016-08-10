@@ -1,5 +1,5 @@
-# snp-pileup
-This application will, given a VCF file containing SNP locations, output for each SNP the counts of the reference nucleotide, alternative nucleotide, errors, and deletions.
+### htstools ###
+Contains three tools (dnafrags, ppflag-fixer, snp-pileup) written by Alex Studer to process bam files for downstream copy number analysis. 
 
 # Installation
 First, HTSlib must be installed on your system. To do that, [download](http://www.htslib.org/download/) it and follow the "Building and installing" instructions on that page.
@@ -10,6 +10,8 @@ sudo ldconfig # only needs to be run the first time
 ./compile.sh
 sudo ./install.sh
 ```
+# snp-pileup
+This application will, given a VCF file containing SNP locations, output for each SNP the counts of the reference nucleotide, alternative nucleotide, errors, and deletions.
 
 # Usage
 `snp-pileup <vcf file> <output file> <sequence files...>`
