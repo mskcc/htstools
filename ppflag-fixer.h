@@ -2,6 +2,7 @@
 #define _MAIN_H_
 
 #include <ctime>
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <iostream>
 #include <sstream>
