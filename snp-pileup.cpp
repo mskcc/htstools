@@ -301,15 +301,15 @@ int program_main(arguments arguments) {
 	// output header to file
 	output << "Chromosome,Position,Ref,Alt";
 	for (i = 0; i < n; ++i) {
-		output << ",File ";
+		output << ",File";
 		output << (i + 1);
-		output << " Refs,File ";
+		output << "R,File";
 		output << (i + 1);
-	    output << " Alts,File ";
+		output << "A,File";
 		output << (i + 1);
-		output << " Errors,File ";
+		output << "E,File";
 		output << (i + 1);
-		output << " Deletions";
+		output << "D";
 	}
 	output << "\n";
 	(arguments.outFunc)(arguments, output.str(), output_file);
@@ -429,7 +429,7 @@ int program_main(arguments arguments) {
 						output << f_info[i].errors;
 						output << ",";
 						output << f_info[i].deletions;
-					}	
+					}
 					output << "\n";
 					(arguments.outFunc)(arguments, output.str(), output_file);
 				}
@@ -502,6 +502,8 @@ int program_main(arguments arguments) {
 	} else {
 		fclose(output_file);
 	}
+
+	return 0; // added return code for successful completion 
 }
 
 int main(int argc, char ** argv) {
