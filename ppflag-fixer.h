@@ -1,9 +1,9 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-#include <ctime>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+#include <ctime>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -12,7 +12,7 @@
 #include "htslib/hfile.h"
 #include "htslib/hts.h"
 #include "htslib/sam.h"
-#include "htslib/faidx.h" 
+#include "htslib/faidx.h"
 #include "htslib/kstring.h"
 #include "htslib/khash_str2int.h"
 #include "htslib/synced_bcf_reader.h"
