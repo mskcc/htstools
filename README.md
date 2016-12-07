@@ -1,15 +1,30 @@
-# htstools 
-Contains three tools (dnafrags, ppflag-fixer, snp-pileup) written by Alex Studer to process bam files for downstream copy number analysis. 
+# htstools
+Contains three tools (dnafrags, ppflag-fixer, snp-pileup) written by Alex Studer to process bam files for downstream copy number analysis.
 
 ## Installation
 First, HTSlib must be installed on your system. To do that, [download](http://www.htslib.org/download/) it and follow the "Building and installing" instructions on that page.
 
-Then, download this code, extract it, `cd` to where you extracted it, and run the following:
-```shell
-sudo ldconfig # only needs to be run the first time
-./compile.sh
-sudo ./install.sh
+Then, download this code, extract it, `cd` to where you extracted it. Edit the Makefile to
+
+- set `HTSDIR` to be the location of the HTSlib you installed
+
+- set `GXX` to point to a relatively modern G++ (>4.9 works)
+
+and run `make all`
+
+_N.B._ may need to set
+
+```bash
+LD_LIBRARY_PATH=${HTSDIR}
 ```
+
+if you see this error:
+```bash
+./snp-pileup: error while loading shared libraries:
+libhts.so.1: cannot open shared object file:
+No such file or directory
+```
+
 ## snp-pileup
 This application will, given a VCF file containing SNP locations, output for each SNP the counts of the reference nucleotide, alternative nucleotide, errors, and deletions.
 
