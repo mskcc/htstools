@@ -10,7 +10,7 @@ g++ -std=c++11 snp-pileup.cpp -lhts -o snp-pileup     # for snp-pileup
 ```
 when htslib is available systemwide, or
 ```shell
-     g++ -std=c++11 -I/path/htslib/include snp-pileup.cpp -L/path/htslib/lib -lhts -Wl,-rpath=/path/htslib/lib -o snp-pileup 
+g++ -std=c++11 -I/path/htslib/include snp-pileup.cpp -L/path/htslib/lib -lhts -Wl,-rpath=/path/htslib/lib -o snp-pileup 
 ```
 when it is installed locally and `path` is the location where it is available. The other two tools `ppflag-fixer` and `dnafrags` can be compiled likewise.
 
