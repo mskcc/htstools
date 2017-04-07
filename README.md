@@ -6,10 +6,14 @@ First, HTSlib must be installed on your system. To do that, [download](http://ww
 
 Then, download this code, extract it, `cd` to where you extracted it, and run the following:
 ```shell
-sudo ldconfig # only needs to be run the first time
-./compile.sh
-sudo ./install.sh
+g++ -std=c++11 snp-pileup.cpp -lhts -o snp-pileup     # for snp-pileup
 ```
+when htslib is available systemwide, or
+```shell
+     g++ -std=c++11 -I/path/htslib/include snp-pileup.cpp -L/path/htslib/lib -lhts -Wl,-rpath=/path/htslib/lib -o snp-pileup 
+```
+when it is installed locally and `path` is the location where it is available. The other two tools `ppflag-fixer` and `dnafrags` can be compiled likewise.
+
 ## snp-pileup
 This application will, given a VCF file containing SNP locations, output for each SNP the counts of the reference nucleotide, alternative nucleotide, errors, and deletions.
 
