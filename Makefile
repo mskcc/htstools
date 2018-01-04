@@ -6,8 +6,7 @@ GXX=/opt/common/CentOS_6/gcc/gcc-4.9.3/bin/g++
 
 #########################################################
 
-CXX=$(GXX) -std=c++11 -I$(HTSDIR) -L$(HTSDIR) -lhts
-
+CXX=$(GXX) -std=c++11 -I$(HTSDIR) -L$(HTSDIR) -lhts -Wl,-rpath=$(HTSDIR)
 all: snp-pileup dnafrags ppflag-fixer
 
 snp-pileup: snp-pileup.cpp
