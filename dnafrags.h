@@ -1,10 +1,10 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <map>
 #include <vector>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 #include "htslib/hfile.h"
 #include "htslib/hts.h"

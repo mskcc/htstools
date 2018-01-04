@@ -1,4 +1,3 @@
-#include "dnafrags.h"
 #include <algorithm>
 #include <iostream>
 #include <cstdio>
@@ -14,6 +13,7 @@
 
 #include <argp.h>
 
+#include "dnafrags.h"
 
 using namespace std;
 
@@ -87,18 +87,18 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state) {
 			// Too many arguments.
 			argp_usage (state);
 		}
-
+		
 		arguments->args[state->arg_num] = arg;
-
+		
 		break;
-
+		
 	case ARGP_KEY_END:
 		if (state->arg_num < 1) {
 			// Not enough arguments.
 			argp_usage (state);
 		}
 		break;
-
+		
 	default:
 		return ARGP_ERR_UNKNOWN;
 	}
@@ -182,7 +182,7 @@ int program_main(arguments arguments) {
 	// try to load sequence file
 	hFILE *hfp = hopen(arguments.args[0], "r");
 	htsFormat fmt;
-
+	
 	if (!hfp) {
 		printf("Failed to read sequence file %s.\n", arguments.args[0]);
 		return 1;
@@ -193,7 +193,7 @@ int program_main(arguments arguments) {
 	if (arguments.verbose) {
 		printf("Detected format: %s\n", hts_format_description(&fmt));
 	}
-
+	
 	samFile *in = hts_hopen(hfp, arguments.args[0], "r");
 	bam_hdr_t *hdr = NULL;
 	if (!in) {
@@ -227,7 +227,7 @@ int program_main(arguments arguments) {
 		}
 		// don't need to fclose() it here because it should be NULL
 	}
-
+	
 	FILE * output_file = (arguments.output ? fopen(arguments.output, "w+") : NULL);
 	uint64_t nopos_skipped = 0;
 	uint64_t rnext_skipped = 0;
@@ -245,10 +245,10 @@ int program_main(arguments arguments) {
 	float last_progress = 0.0;
 	int bin_size = arguments.bin_size;
 	int bin_size_half = bin_size / 2;
-
+	
 	if (arguments.progress) {
 		for (int i = 0; i < hdr->n_targets; ++i) {
-			uint64_t u, v;
+			uint64_t u, v; 
 			hts_idx_get_stat(idx, i, &u, &v);
 			index_total += u;
 			index_total += v;
@@ -260,7 +260,7 @@ int program_main(arguments arguments) {
 			printf("Reading %" PRIu64 " read(s).\n", index_total);
 		}
 	}
-
+	
 	if (arguments.output && !output_file) {
 		printf("Failed to open output file %s for writing. Do you have proper permissions?\n", arguments.output);
 		return 1;
@@ -273,9 +273,9 @@ int program_main(arguments arguments) {
 	} else {
 		fprintf(output_file, "Midpoint,Reads,Median length,Chromosome\n");
 	}
-
+	
 	bam1_t *b = bam_init1();
-	int ret;
+	int ret; 
 	while ((ret = sam_read1(in, hdr, b)) >= 0) {
 		const bam1_core_t *c = &b->core;
 		total++;
@@ -319,7 +319,7 @@ int program_main(arguments arguments) {
 			// and set it
 			current_chromosome = c->tid;
 		}
-
+		
 		uint64_t start_position = c->pos;
 		if (c->isize < 1) {//(!(c->flag & READ_FIRST_IN_PAIR)) {
 			// you aren't the primary, ignored
@@ -349,7 +349,7 @@ int program_main(arguments arguments) {
 		float progress = ((float)total/index_total);
 		if (arguments.progress && (int)(last_progress*100) != (int)(progress*100)) {
 			int barWidth = 70;
-
+			
 			std::cout << "[";
 			int pos = barWidth * progress;
 			for (int i = 0; i < barWidth; ++i) {
@@ -363,7 +363,7 @@ int program_main(arguments arguments) {
 			last_progress = progress;
 //			printf("%0.0f%% complete (%" PRIu64 " out of %" PRIu64 ")\n", ((float)total/index_total) * 100, total, index_total);
 		}
-	}
+	} 
 	bam_destroy1(b);
 
 	duration = ( clock() - start ) / (double) CLOCKS_PER_SEC;
@@ -387,7 +387,7 @@ int program_main(arguments arguments) {
 	}
 }
 
-int main(int argc, char ** argv) {
+int main(int argc, char ** argv) {	
 	struct arguments arguments;
 
 	arguments.include_all = false;
@@ -403,7 +403,7 @@ int main(int argc, char ** argv) {
 	arguments.progress = false;
 	arguments.silent = false;
 	arguments.outFunc = &flushOut;
-
+	
 	argp_parse (&argp, argc, argv, 0, 0, &arguments);
 
 	return program_main(arguments);
